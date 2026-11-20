@@ -1,0 +1,62 @@
+# B-Minor Lexical & Syntactic Grammar Specification (EBNF)
+# Phase 1 - Compiler Design Project
+
+## 1. Lexical Rules & Precedence
+# Priority Rule: Keywords take precedence over Identifiers.
+# Matching Rule: Longest Match (Maximal Munch) applies at every input position.
+# Whitespace (space, tab, \r, \n) and comments (//..., /*...*/) are skipped after updating line/column counters.
+
+keyword        = "array" | "auto" | "boolean" | "char" | "else" | "false"
+               | "float" | "for" | "function" | "if" | "integer" | "return"
+               | "string" | "true" | "void" | "while" ;
+
+identifier     = letter , { letter | digit | "_" } ;
+letter         = "a".."z" | "A".."Z" | "_" ;
+digit          = "0".."9" ;
+
+int_literal    = digit , { digit } ;
+float_literal  = digit , { digit } , "." , digit , { digit } ;
+char_literal   = "'" , ( escape_seq | printable_char ) , "'" ;
+string_literal = '"' , { escape_seq | printable_char } , '"' ;
+escape_seq     = "\" , ( "n" | "t" | "r" | "\" | '"' | "'" | "0" ) ;
+
+operator       = "++" | "--" | "<=" | ">=" | "==" | "!=" | "&&" | "||"
+               | "+" | "-" | "*" | "/" | "%" | "^" | "=" | "<" | ">" | "!" ;
+delimiter      = "(" | ")" | "{" | "}" | "[" | "]" | ";" | ":" | "," ;
+
+## 2. Syntactic Grammar (Left-Recursion-Free EBNF for Top-Down LL Parsing)
+program        = { decl } , EOF ;
+decl           = var_decl | func_decl ;
+
+var_decl       = identifier , ":" , type_spec , [ "=" , expr ] , ";" ;
+func_decl      = identifier , ":" , "function" , type_spec , "(" , [ param_list ] , ")" , ( block | ";" ) ;
+param_list     = param , { "," , param } ;
+param          = identifier , ":" , type_spec ;
+
+type_spec      = base_type | array_type ;
+base_type      = "integer" | "boolean" | "char" | "string" | "float" | "void" | "auto" ;
+array_type     = "array" , "[" , [ expr ] , "]" , type_spec ;
+
+block          = "{" , { stmt } , "}" ;
+stmt           = if_stmt | while_stmt | for_stmt | return_stmt | expr_stmt | block | var_decl ;
+
+if_stmt        = "if" , "(" , expr , ")" , stmt , [ "else" , stmt ] ;
+while_stmt     = "while" , "(" , expr , ")" , stmt ;
+for_stmt       = "for" , "(" , [ expr ] , ";" , [ expr ] , ";" , [ expr ] , ")" , stmt ;
+return_stmt    = "return" , [ expr ] , ";" ;
+expr_stmt      = [ expr ] , ";" ;
+
+expr           = assignment ;
+assignment     = logical_or , [ "=" , assignment ] ;
+logical_or     = logical_and , { "||" , logical_and } ;
+logical_and    = equality , { "&&" , equality } ;
+equality       = relational , { ( "==" | "!=" ) , relational } ;
+relational     = additive , { ( "<" | "<=" | ">" | ">=" ) , additive } ;
+additive       = multiplicative , { ( "+" | "-" ) , multiplicative } ;
+multiplicative = unary , { ( "*" | "/" | "%" ) , unary } ;
+unary          = ( "-" | "!" ) , unary | postfix ;
+postfix        = primary , { postfix_tail } ;
+postfix_tail   = "[" , expr , "]" | "(" , [ arg_list ] , ")" | "++" | "--" ;
+arg_list       = expr , { "," , expr } ;
+primary        = int_literal | float_literal | char_literal | string_literal
+               | "true" | "false" | identifier | "(" , expr , ")" ;
