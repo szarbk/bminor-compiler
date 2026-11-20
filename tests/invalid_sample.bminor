@@ -1,0 +1,9 @@
+x: integer = 5 @;
+msg: string = "unterminated string
+bad_fn: function integer (a: integer) = {
+    y: integer = ;
+    if (a > 0 {
+        return a;
+    }
+    return 0;
+}
